@@ -26,11 +26,14 @@ func MustLoad() *Config {
 		flags := flag.String("config", "", "Path to config file")
 		flag.Parse()
 
-		configPath = *flags
+		configPath = *flags	
+
+		if configPath == "" {
+			log.Fatal("config path not provided")
+		}
+
 	}
-	if configPath == "" {
-		log.Fatal("config path not provided")
-	}
+
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Fatal("config file does not exist at path: ", configPath)
