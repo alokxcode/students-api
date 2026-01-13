@@ -12,12 +12,21 @@ import (
 
 	"github.com/alokxcode/students-api/internal/config"
 	"github.com/alokxcode/students-api/internal/http/handlers/student"
+	"github.com/alokxcode/students-api/internal/http/storage/sqlite"
 )
 
 func main() {
 	// load config
 	cfg := config.MustLoad()
 	// database setup
+
+	_, err := sqlite.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slog.Info("database initialised", slog.String("ENV", cfg.Env))
+
 	// setup router
 
 	router := http.NewServeMux()
