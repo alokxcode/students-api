@@ -36,3 +36,24 @@ func New(conf *config.Config) (*Sqlite, error) {
 	}, nil
 
 }
+
+func (s *Sqlite) CreateStudent(name string, email string, password string) (int, error) {
+	stm, err := s.Db.Prepare(`INSERT INTO students(name, email, password) VALUES(?,?,?)`)
+	if err != nil {
+		return 0, err
+	}
+	defer stm.Close()
+
+	result, err := stm.Exec(name, email, password)
+	if err != nil {
+		return 0, err
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(lastId), nil
+
+}
