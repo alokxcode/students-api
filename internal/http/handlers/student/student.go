@@ -70,3 +70,57 @@ func GetById(db storage.DB) http.HandlerFunc {
 
 	}
 }
+
+func GetList(db storage.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("Gettings students")
+		students, err := db.GetStudents()
+		if err != nil {
+			response.GenerelError(err, 500)
+		}
+
+		response.WriteJson(w, http.StatusOK, students)
+	}
+}
+
+func Update(db storage.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		IntId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.GenerelError(err, 400)
+		}
+		var student types.Student
+		// decode
+		err = json.NewDecoder(r.Body).Decode(&student)
+		if err != nil {
+			response.GenerelError(err, 400)
+		}
+
+		updatedId, err := db.UpdateStudent(int(IntId), student)
+		if err != nil {
+			response.GenerelError(err, 500)
+		}
+
+		response.WriteJson(w, http.StatusOK, fmt.Sprint("Updated Student Id :", updatedId))
+
+	}
+}
+
+func Delete(db storage.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		IntId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.GenerelError(err, 400)
+		}
+
+		deltedId, err := db.DeleteStudent(int(IntId))
+		if err != nil {
+			response.GenerelError(err, 500)
+		}
+
+		response.WriteJson(w, http.StatusOK, fmt.Sprint("Deleted Student :", deltedId))
+
+	}
+}
