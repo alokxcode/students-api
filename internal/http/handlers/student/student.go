@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/alokxcode/students-api/internal/http/storage"
 	"github.com/alokxcode/students-api/internal/types"
@@ -47,5 +48,25 @@ func New(db storage.DB) http.HandlerFunc {
 		slog.Info("User created successfully", slog.String("Id :", fmt.Sprint(lastId)))
 
 		response.WriteJson(w, http.StatusCreated, map[string]int{"id": lastId})
+	}
+}
+
+func GetById(db storage.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		slog.Info("getting student", slog.String("id :", id))
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, err)
+		}
+
+		student, err := db.GetStudentById(int(intId))
+		if err != nil {
+			response.GenerelError(err, 400)
+			return
+		}
+
+		response.WriteJson(w, http.StatusOK, student)
+
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/alokxcode/students-api/internal/config"
+	"github.com/alokxcode/students-api/internal/types"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -55,5 +56,25 @@ func (s *Sqlite) CreateStudent(name string, email string, password string) (int,
 	}
 
 	return int(lastId), nil
+
+}
+
+func (s *Sqlite) GetStudentById(id int) (types.Student, error) {
+	stm, err := s.Db.Prepare(`SELECT * FROM students WHERE id = ? LIMIT 1`)
+	if err != nil {
+		return types.Student{}, err
+	}
+	defer stm.Close()
+
+	var student types.Student
+	err = stm.QueryRow(id).Scan(&student.Id, &student.Name, &student.Email, &student.Password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.Student{}, fmt.Errorf("no student found")
+		}
+		return types.Student{}, err
+	}
+
+	return student, nil
 
 }
