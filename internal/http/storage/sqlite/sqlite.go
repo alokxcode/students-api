@@ -107,23 +107,50 @@ func (s *Sqlite) GetStudents() ([]types.Student, error) {
 
 }
 
-func (s *Sqlite) UpdateStudent(id int, student types.Student) (int, error) {
-	s.Db.Prepare(`SELECT ?`)
-}
+func (s *Sqlite) UpdateStudent(id int, feild string, newValue any) (types.Student, error) {
 
-func (s *Sqlite) DeleteStudent(id int) (int, error) {
-	stmt, err := s.Db.Prepare(`DELETE FROM students WHERE id = ?`)
+	query := fmt.Sprintf("UPDATE students set %s = ? WHERE id = ? RETURNING id,name,email,password", feild)
+
+	stmt, err := s.Db.Prepare(query)
 	if err != nil {
-		return 0,err
+		return types.Student{}, err
 	}
 
 	defer stmt.Close()
 
-	result, err := stmt.QueryRow()
+	row := stmt.QueryRow(newValue, id)
+	if err != nil {
+		return types.Student{}, err
+	}
+
+	var updatedStudent types.Student
+	err = row.Scan(&updatedStudent.Id, &updatedStudent.Name, &updatedStudent.Email, &updatedStudent.Password)
+	if err != nil {
+		return types.Student{}, err
+	}
+	return updatedStudent, nil
+}
+
+func (s *Sqlite) DeleteStudent(id int) (int, error) {
+	query := fmt.Sprintf("DELETE FROM students WHERE id = ? RETURNING %d", id)
+	stmt, err := s.Db.Prepare(query)
 	if err != nil {
 		return 0, err
 	}
 
-	deletedId := result.
+	defer stmt.Close()
+
+	row := stmt.QueryRow(id)
+	if err != nil {
+		return 0, err
+	}
+
+	var deletedId int
+	err = row.Scan(&deletedId)
+	if err != nil {
+		return 0, err
+	}
+
+	return deletedId, nil
 
 }

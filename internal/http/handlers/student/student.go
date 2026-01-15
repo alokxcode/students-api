@@ -77,6 +77,7 @@ func GetList(db storage.DB) http.HandlerFunc {
 		students, err := db.GetStudents()
 		if err != nil {
 			response.GenerelError(err, 500)
+			return
 		}
 
 		response.WriteJson(w, http.StatusOK, students)
@@ -89,20 +90,48 @@ func Update(db storage.DB) http.HandlerFunc {
 		IntId, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
 			response.GenerelError(err, 400)
+			return
 		}
-		var student types.Student
+
+		slog.Info("updating student", slog.String("id : ", fmt.Sprint(IntId)))
+
+		var student types.StudentPatch
 		// decode
 		err = json.NewDecoder(r.Body).Decode(&student)
 		if err != nil {
 			response.GenerelError(err, 400)
+			return
 		}
 
-		updatedId, err := db.UpdateStudent(int(IntId), student)
-		if err != nil {
-			response.GenerelError(err, 500)
+		var updatedStudent types.Student
+
+		if student.Name != nil {
+			updatedStudent, err = db.UpdateStudent(int(IntId), "name", student.Name)
+			if err != nil {
+				response.GenerelError(err, 500)
+				return
+			}
+
 		}
 
-		response.WriteJson(w, http.StatusOK, fmt.Sprint("Updated Student Id :", updatedId))
+		if student.Email != nil {
+			updatedStudent, err = db.UpdateStudent(int(IntId), "email", student.Email)
+			if err != nil {
+				response.GenerelError(err, 500)
+				return
+			}
+
+		}
+
+		if student.Password != nil {
+			updatedStudent, err = db.UpdateStudent(int(IntId), "password", student.Password)
+			if err != nil {
+				response.GenerelError(err, 500)
+				return
+			}
+		}
+		slog.Info("student updated", slog.String("id : ", fmt.Sprint(IntId)))
+		response.WriteJson(w, http.StatusOK, updatedStudent)
 
 	}
 }
@@ -113,14 +142,18 @@ func Delete(db storage.DB) http.HandlerFunc {
 		IntId, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
 			response.GenerelError(err, 400)
+			return
 		}
+
+		slog.Info("deleting student", slog.String("", fmt.Sprintf("Id : %d", IntId)))
 
 		deltedId, err := db.DeleteStudent(int(IntId))
-		if err != nil {
+		if err != nil && deltedId == 0 {
 			response.GenerelError(err, 500)
+			return
 		}
 
-		response.WriteJson(w, http.StatusOK, fmt.Sprint("Deleted Student :", deltedId))
+		response.WriteJson(w, http.StatusOK, fmt.Sprintf("Deleted Student Id : %d", deltedId))
 
 	}
 }

@@ -6,3 +6,10 @@ type Student struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password"`
 }
+
+type StudentPatch struct {
+	Id       *int
+	Name     *string
+	Email    *string
+	Password *string
+}
